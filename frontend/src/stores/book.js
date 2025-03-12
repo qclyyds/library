@@ -8,6 +8,7 @@ export const useBookStore = defineStore('book', () => {
   const currentBook = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const totalBooks = ref(0)
   
   async function fetchBooks(filters = {}) {
     loading.value = true
@@ -15,23 +16,44 @@ export const useBookStore = defineStore('book', () => {
     
     try {
       let url = 'http://localhost:3000/api/books'
+      const params = new URLSearchParams()
       
-      if (Object.keys(filters).length > 0) {
-        const params = new URLSearchParams()
-        
-        if (filters.category) {
-          params.append('category', filters.category)
-        }
-        
-        if (filters.title) {
-          params.append('title', filters.title)
-        }
-        
-        url += `?${params.toString()}`
+      // 获取当前页码和每页数量
+      const page = filters.page || 1
+      const pageSize = filters.pageSize || 12
+      
+      // 添加分页参数
+      params.append('page', page)
+      params.append('pageSize', pageSize)
+      
+      // 添加其他筛选参数
+      if (filters.category) {
+        params.append('category', filters.category)
       }
       
+      if (filters.title) {
+        params.append('title', filters.title)
+      }
+      
+      url += `?${params.toString()}`
       const response = await axios.get(url)
-      books.value = response.data
+      
+      // 如果后端已经实现了分页
+      if (response.data.books && typeof response.data.total === 'number') {
+        books.value = response.data.books
+        totalBooks.value = response.data.total
+      } else {
+        // 如果后端还没实现分页，在前端进行分页处理
+        const allBooks = response.data
+        totalBooks.value = allBooks.length
+        
+        // 计算当前页的起始和结束索引
+        const startIndex = (page - 1) * pageSize
+        const endIndex = startIndex + pageSize
+        
+        // 获取当前页的图书
+        books.value = allBooks.slice(startIndex, endIndex)
+      }
     } catch (err) {
       error.value = '获取图书列表失败'
       console.error(err)
@@ -76,7 +98,8 @@ export const useBookStore = defineStore('book', () => {
     featuredBooks, 
     currentBook, 
     loading, 
-    error, 
+    error,
+    totalBooks,
     fetchBooks, 
     fetchFeaturedBooks, 
     fetchBookById 

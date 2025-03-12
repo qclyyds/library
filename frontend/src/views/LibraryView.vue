@@ -88,35 +88,60 @@
           没有找到符合条件的图书
         </div>
         
-        <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 g-3">
+        <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           <div v-for="book in bookStore.books" :key="book.id" class="col">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">{{ book.title }}</h5>
-                <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
-                <p class="card-text">{{ book.description?.substring(0, 80) }}{{ book.description?.length > 80 ? '...' : '' }}</p>
-                <p class="card-text text-primary fw-bold">¥{{ book.price }}</p>
-                <RouterLink :to="`/book/${book.id}`" class="btn btn-outline-primary">查看详情</RouterLink>
+            <div class="card book-card h-100">
+              <div class="card-img-wrapper">
+                <img 
+                  :src="book.cover || 'https://via.placeholder.com/200x300?text=暂无封面'" 
+                  class="card-img-top" 
+                  :alt="book.title"
+                >
+                <div class="card-img-overlay">
+                  <RouterLink 
+                    :to="`/book/${book.id}`" 
+                    class="btn btn-primary btn-sm view-detail"
+                  >
+                    查看详情
+                  </RouterLink>
+                </div>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-truncate" :title="book.title">{{ book.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted text-truncate" :title="book.author">{{ book.author }}</h6>
+                <div class="d-flex justify-content-between align-items-center mt-auto">
+                  <span class="text-primary fw-bold price">¥{{ book.price }}</span>
+                  <span class="badge bg-secondary">{{ book.category }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
         
         <!-- 分页控件 -->
-        <div v-if="bookStore.totalBooks > 0" class="d-flex justify-content-center mt-4">
-          <nav aria-label="Page navigation">
-            <ul class="pagination">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">上一页</a>
-              </li>
-              <li v-for="page in displayedPages" :key="page" class="page-item" :class="{ active: page === currentPage }">
-                <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">下一页</a>
-              </li>
-            </ul>
-          </nav>
+        <div v-if="bookStore.books.length > 0" class="d-flex flex-column align-items-center mt-4 pagination-wrapper">
+          <div class="btn-group">
+            <button 
+              class="btn btn-primary" 
+              @click="prevPage" 
+              :disabled="currentPage === 1"
+            >上一页</button>
+            <button 
+              v-for="page in displayedPages" 
+              :key="page"
+              class="btn" 
+              :class="page === currentPage ? 'btn-primary' : 'btn-outline-primary'"
+              @click="changePage(page)"
+            >{{ page }}</button>
+            <button 
+              class="btn btn-primary" 
+              @click="nextPage" 
+              :disabled="currentPage === totalPages"
+            >下一页</button>
+          </div>
+          <div class="mt-2 text-muted">
+            当前第 {{ currentPage }} 页，共 {{ totalPages }} 页（共 {{ bookStore.totalBooks }} 本书）
+          </div>
         </div>
       </div>
     </div>
@@ -139,7 +164,7 @@ const filters = ref({
 })
 
 const currentPage = ref(1)
-const pageSize = 15 // 每页显示15本书
+const pageSize = 12 // 每页显示12本书
 
 // 计算总页数
 const totalPages = computed(() => {
@@ -148,34 +173,23 @@ const totalPages = computed(() => {
 
 // 显示哪些页码按钮（最多显示5个页码）
 const displayedPages = computed(() => {
-  if (totalPages.value <= 5) {
-    return Array.from({ length: totalPages.value }, (_, i) => i + 1)
+  const total = totalPages.value
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1)
   }
   
-  // 如果当前页接近开始
-  if (currentPage.value <= 3) {
-    return [1, 2, 3, 4, 5]
+  let start = currentPage.value - 2
+  let end = currentPage.value + 2
+  
+  if (start < 1) {
+    start = 1
+    end = 5
+  } else if (end > total) {
+    end = total
+    start = total - 4
   }
   
-  // 如果当前页接近结束
-  if (currentPage.value >= totalPages.value - 2) {
-    return [
-      totalPages.value - 4,
-      totalPages.value - 3,
-      totalPages.value - 2,
-      totalPages.value - 1,
-      totalPages.value
-    ]
-  }
-  
-  // 当前页在中间
-  return [
-    currentPage.value - 2,
-    currentPage.value - 1,
-    currentPage.value,
-    currentPage.value + 1,
-    currentPage.value + 2
-  ]
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
 
 function applyFilters() {
@@ -198,7 +212,7 @@ function changePage(page) {
   currentPage.value = page
   fetchBooks()
   
-  // 滚动到页面顶部，提高用户体验
+  // 滚动到页面顶部
   window.scrollTo({
     top: 0,
     behavior: 'smooth'
@@ -253,6 +267,19 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+// 修改翻页方法
+function prevPage() {
+  if (currentPage.value > 1) {
+    changePage(currentPage.value - 1)
+  }
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    changePage(currentPage.value + 1)
+  }
+}
 </script>
 
 <style scoped>
@@ -274,7 +301,7 @@ onUnmounted(() => {
 
 /* 分页按钮样式 */
 .pagination {
-  margin-bottom: 1rem;
+  display: none;
 }
 
 /* 筛选卡片样式 */
@@ -300,6 +327,144 @@ onUnmounted(() => {
     right: 1rem;
     width: auto;
     z-index: 1000;
+  }
+}
+
+.pagination-wrapper {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.btn-group .btn {
+  margin: 0 2px;
+}
+
+@media (max-width: 576px) {
+  .btn-group .btn:not(:first-child):not(:last-child) {
+    display: none;
+  }
+  
+  .pagination-wrapper {
+    margin: 1rem 0;
+    padding: 0.5rem;
+  }
+}
+
+/* 书籍卡片样式 */
+.book-card {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-img-wrapper {
+  position: relative;
+  padding-top: 140%; /* 调整图片比例为 7:10 */
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.card-img-wrapper img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover .card-img-wrapper img {
+  transform: scale(1.05);
+}
+
+.card-img-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.book-card:hover .card-img-overlay {
+  opacity: 1;
+}
+
+.view-detail {
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.book-card:hover .view-detail {
+  transform: translateY(0);
+}
+
+.card-body {
+  padding: 1rem;
+  background-color: #fff;
+}
+
+.card-title {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #333;
+}
+
+.card-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.price {
+  font-size: 1.1rem;
+  color: #e74c3c;
+}
+
+.badge {
+  font-weight: normal;
+  padding: 0.5em 0.8em;
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+/* 响应式调整 */
+@media (max-width: 767px) {
+  .book-card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-title {
+    font-size: 0.95rem;
+  }
+  
+  .card-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .price {
+    font-size: 1rem;
+  }
+  
+  .badge {
+    font-size: 0.8rem;
   }
 }
 </style> 
