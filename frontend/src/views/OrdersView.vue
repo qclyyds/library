@@ -24,7 +24,16 @@
               <span class="fw-bold">订单号: {{ order.id }}</span>
               <span class="d-block d-md-inline ms-md-3 text-muted">{{ formatDate(order.orderDate) }}</span>
             </div>
-            <span class="fs-5 text-primary">¥{{ order.totalPrice }}</span>
+            <div>
+              <span class="fs-5 text-primary me-3">¥{{ order.totalPrice }}</span>
+              <button 
+                class="btn btn-danger btn-sm"
+                @click="cancelOrder(order.id)"
+                :disabled="orderStore.cancelling === order.id"
+              >
+                {{ orderStore.cancelling === order.id ? '删除中...' : '删除订单' }}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -60,5 +69,11 @@ onMounted(() => {
 function formatDate(dateString) {
   const date = new Date(dateString)
   return date.toLocaleString('zh-CN')
+}
+
+async function cancelOrder(orderId) {
+  if (confirm('确定要删除这个订单吗？删除后将无法恢复！')) {
+    await orderStore.cancelOrder(orderId)
+  }
 }
 </script> 

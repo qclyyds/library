@@ -6,6 +6,7 @@ export const useOrderStore = defineStore('order', () => {
   const orders = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const cancelling = ref(null)
   
   async function fetchUserOrders() {
     loading.value = true
@@ -39,5 +40,30 @@ export const useOrderStore = defineStore('order', () => {
     }
   }
   
-  return { orders, loading, error, fetchUserOrders, createOrder }
+  async function cancelOrder(orderId) {
+    cancelling.value = orderId
+    error.value = null
+    
+    try {
+      await axios.post(`http://localhost:3000/api/orders/${orderId}/cancel`)
+      await fetchUserOrders()
+      return { success: true }
+    } catch (err) {
+      error.value = err.response?.data?.message || '删除订单失败'
+      console.error('删除订单失败:', err)
+      return { success: false, message: error.value }
+    } finally {
+      cancelling.value = null
+    }
+  }
+  
+  return { 
+    orders, 
+    loading, 
+    error, 
+    cancelling,
+    fetchUserOrders, 
+    createOrder,
+    cancelOrder
+  }
 }) 
