@@ -9,7 +9,7 @@
       </div>
       
       <!-- 左侧筛选栏 -->
-      <div class="col-md-3 mb-4">
+      <div class="col-md-3 mb-4" id="filter-wrapper">
         <div class="collapse d-md-block" id="filterCollapse">
           <div 
             class="card filter-card" 
@@ -73,45 +73,47 @@
       </div>
       
       <!-- 右侧内容区 -->
-      <div class="col-md-9">
-        <div v-if="bookStore.loading" class="text-center">
+      <div class="col-md-9 content-area">
+        <div v-if="bookStore.loading" class="text-center loading-indicator">
           <div class="spinner-border" role="status">
             <span class="visually-hidden">加载中...</span>
           </div>
         </div>
         
-        <div v-else-if="bookStore.error" class="alert alert-danger">
+        <div v-else-if="bookStore.error" class="alert alert-danger content-message">
           {{ bookStore.error }}
         </div>
         
-        <div v-else-if="bookStore.books.length === 0" class="alert alert-info">
+        <div v-else-if="bookStore.books.length === 0" class="alert alert-info content-message">
           没有找到符合条件的图书
         </div>
         
-        <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-          <div v-for="book in bookStore.books" :key="book.id" class="col">
-            <div class="card book-card h-100">
-              <div class="card-img-wrapper">
-                <img 
-                  :src="book.cover || 'https://via.placeholder.com/200x300?text=暂无封面'" 
-                  class="card-img-top" 
-                  :alt="book.title"
-                >
-                <div class="card-img-overlay">
-                  <RouterLink 
-                    :to="`/book/${book.id}`" 
-                    class="btn btn-primary btn-sm view-detail"
+        <div v-else class="books-grid">
+          <div class="books-container">
+            <div v-for="book in bookStore.books" :key="book.id" class="book-item">
+              <div class="card book-card">
+                <div class="card-img-wrapper">
+                  <img 
+                    :src="book.cover || 'https://via.placeholder.com/150x200?text=暂无封面'" 
+                    class="card-img-top" 
+                    :alt="book.title"
                   >
-                    查看详情
-                  </RouterLink>
+                  <div class="card-img-overlay">
+                    <RouterLink 
+                      :to="`/book/${book.id}`" 
+                      class="btn btn-primary btn-sm view-detail"
+                    >
+                      查看详情
+                    </RouterLink>
+                  </div>
                 </div>
-              </div>
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-truncate" :title="book.title">{{ book.title }}</h5>
-                <h6 class="card-subtitle mb-2 text-muted text-truncate" :title="book.author">{{ book.author }}</h6>
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                  <span class="text-primary fw-bold price">¥{{ book.price }}</span>
-                  <span class="badge bg-secondary">{{ book.category }}</span>
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title text-truncate" :title="book.title">{{ book.title }}</h5>
+                  <h6 class="card-subtitle mb-1 text-muted text-truncate" :title="book.author">{{ book.author }}</h6>
+                  <div class="d-flex justify-content-between align-items-center mt-auto">
+                    <span class="text-primary fw-bold price">¥{{ book.price }}</span>
+                    <span class="badge bg-secondary">{{ book.category }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -224,12 +226,28 @@ function fetchBooks() {
     ...filters.value,
     page: currentPage.value,
     pageSize: pageSize
-  })
+  }).finally(() => {
+    // 数据加载完成后，确保布局正确
+    setTimeout(() => {
+      // 强制重新计算布局
+      const booksGrid = document.querySelector('.books-grid');
+      if (booksGrid) {
+        // 触发重排
+        booksGrid.style.display = 'none';
+        // 强制浏览器重绘
+        void booksGrid.offsetHeight;
+        booksGrid.style.display = '';
+      }
+    }, 100);
+  });
 }
 
 // 切换筛选面板的固定状态
 function toggleFilterFixed() {
-  isFilterFixed.value = !isFilterFixed.value
+  // 只在移动设备上切换状态
+  if (window.innerWidth < 768) {
+    isFilterFixed.value = !isFilterFixed.value
+  }
 }
 
 // 设置初始偏移量
@@ -238,19 +256,12 @@ let headerHeight = 0
 
 // 监听滚动事件
 function handleScroll() {
-  if (isFilterFixed.value) return
-  
   if (!filterCard.value) return
   
   // 获取顶部导航栏高度 + 一些额外空间
   if (headerHeight === 0) {
     const header = document.querySelector('header')
     headerHeight = header ? header.offsetHeight + 20 : 70
-  }
-  
-  // 如果尚未设置初始偏移量，先计算
-  if (filterTopOffset === 0) {
-    filterTopOffset = filterCard.value.getBoundingClientRect().top + window.scrollY - headerHeight
   }
   
   // 设置sticky定位的top值
@@ -260,12 +271,18 @@ function handleScroll() {
 onMounted(() => {
   fetchBooks()
   window.addEventListener('scroll', handleScroll)
+  window.addEventListener('resize', handleScroll)
+  
   // 初始化后调用一次
   setTimeout(handleScroll, 500)
+  
+  // 数据加载后再次调用以确保高度正确
+  setTimeout(handleScroll, 1000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('resize', handleScroll)
 })
 
 // 修改翻页方法
@@ -309,13 +326,150 @@ function nextPage() {
   transition: all 0.3s ease;
   position: sticky;
   top: 70px; /* 这个值会被JS动态调整，与导航栏高度有关 */
+  width: 100%; /* 确保宽度始终为100% */
+  margin-bottom: 1rem;
 }
 
 /* 固定状态的筛选卡片 */
 .filter-fixed {
-  position: fixed;
+  position: sticky;
+  top: 70px;
   z-index: 100;
-  width: calc(25% - 2rem); /* 保持与col-md-3大致相同的宽度 */
+}
+
+/* 固定左侧筛选栏区域 */
+#filter-wrapper {
+  min-height: calc(100vh - 120px); /* 设置固定高度，减去头部和一些边距 */
+}
+
+/* 筛选栏内容区固定高度，超出时出现滚动条 */
+#filter-wrapper .card-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+/* 右侧内容区固定最小高度 */
+.content-area {
+  min-height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px); /* 限制最大高度 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止内容溢出 */
+}
+
+/* 确保图书网格区域可以滚动 */
+.books-grid {
+  height: calc(100vh - 250px); /* 固定高度，减去头部、分页和其他元素的高度 */
+  overflow-y: auto; /* 垂直滚动 */
+  padding-right: 5px; /* 为滚动条预留空间 */
+  margin-bottom: 0; /* 移除底部边距 */
+  margin-top: 0;
+  border: 1px solid #eee; /* 添加边框使滚动区域更明显 */
+  min-height: 400px; /* 添加最小高度，确保即使内容少也不会塌陷 */
+  position: relative; /* 确保定位上下文 */
+  display: block; /* 确保以块级元素显示 */
+}
+
+/* 图书容器 */
+.books-container {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 5px;
+  min-height: calc(100% - 10px);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  height: 100%; /* 固定高度 */
+}
+
+/* 图书项目 */
+.book-item {
+  width: 25%; /* 每行4本书 */
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+/* 书籍卡片样式 */
+.book-card {
+  transition: all 0.2s ease;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  max-width: 100%; /* 确保卡片不超出容器 */
+}
+
+/* 减小卡片内边距 */
+.card-body {
+  padding: 0.5rem;
+  background-color: #fff;
+  font-size: 0.8rem;
+}
+
+/* 缩小标题文字 */
+.card-title {
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #333;
+  height: 1.2em; /* 固定高度确保对齐 */
+}
+
+/* 缩小副标题文字 */
+.card-subtitle {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.3rem;
+  height: 1.2em; /* 固定高度确保对齐 */
+}
+
+/* 调整价格文字 */
+.price {
+  font-size: 0.85rem;
+  color: #e74c3c;
+}
+
+/* 调整标签大小 */
+.badge {
+  font-weight: normal;
+  padding: 0.2em 0.4em;
+  background-color: #f0f0f0;
+  color: #666;
+  font-size: 0.65rem;
+}
+
+/* 固定分页控件位置 */
+.pagination-wrapper {
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  flex-shrink: 0; /* 防止分页区域被压缩 */
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+}
+
+/* 加载指示器垂直居中 */
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* 固定内容容器 */
+.library .row {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+/* 确保筛选栏容器高度一致 */
+#filter-wrapper .collapse {
+  height: 100%;
 }
 
 /* 媒体查询以处理小屏幕上的固定筛选 */
@@ -327,14 +481,37 @@ function nextPage() {
     right: 1rem;
     width: auto;
     z-index: 1000;
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 允许滚动 */
   }
-}
-
-.pagination-wrapper {
-  background-color: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 2rem 0;
+  
+  /* 移动端不使用固定高度 */
+  #filter-wrapper, .content-area {
+    min-height: auto;
+    max-height: none;
+  }
+  
+  /* 移动端允许自动换行 */
+  .library .row {
+    flex-wrap: wrap;
+  }
+  
+  /* 移动端两列显示 */
+  .book-item {
+    width: 50%; /* 小屏幕2列 */
+  }
+  
+  /* 调整图书网格高度为自适应 */
+  .books-grid {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+    border: none;
+  }
+  
+  .card-title, .card-subtitle {
+    height: auto;
+  }
 }
 
 .btn-group .btn {
@@ -352,13 +529,6 @@ function nextPage() {
   }
 }
 
-/* 书籍卡片样式 */
-.book-card {
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .book-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -366,7 +536,7 @@ function nextPage() {
 
 .card-img-wrapper {
   position: relative;
-  padding-top: 140%; /* 调整图片比例为 7:10 */
+  padding-top: 120%; /* 调整图片比例，进一步降低高度 */
   overflow: hidden;
   background-color: #f8f9fa;
 }
@@ -414,57 +584,17 @@ function nextPage() {
   transform: translateY(0);
 }
 
-.card-body {
-  padding: 1rem;
-  background-color: #fff;
+/* 修改移动端响应式布局 */
+@media (max-width: 991px) {
+  .book-item {
+    width: 33.333%; /* 中等屏幕3列 */
+  }
 }
 
-.card-title {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-  font-weight: 600;
-  color: #333;
-}
-
-.card-subtitle {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 1rem;
-}
-
-.price {
-  font-size: 1.1rem;
-  color: #e74c3c;
-}
-
-.badge {
-  font-weight: normal;
-  padding: 0.5em 0.8em;
-  background-color: #f0f0f0;
-  color: #666;
-}
-
-/* 响应式调整 */
-@media (max-width: 767px) {
-  .book-card {
-    margin-bottom: 1rem;
-  }
-  
-  .card-title {
-    font-size: 0.95rem;
-  }
-  
-  .card-subtitle {
-    font-size: 0.85rem;
-  }
-  
-  .price {
-    font-size: 1rem;
-  }
-  
-  .badge {
-    font-size: 0.8rem;
-  }
+/* 空内容或错误消息样式 */
+.content-message {
+  margin: 2rem;
+  text-align: center;
+  padding: 2rem;
 }
 </style> 

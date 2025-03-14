@@ -22,6 +22,8 @@ router.delete('/orders/:id', adminAuth, adminOrderController.deleteOrder);
 // 用户管理路由
 router.get('/users', adminAuth, adminUserController.getAllUsers);
 router.get('/users/:id', adminAuth, adminUserController.getUser);
+router.post('/users', adminAuth, adminUserController.createUser);
+router.put('/users/:id', adminAuth, adminUserController.updateUser);
 router.delete('/users/:id', adminAuth, adminUserController.deleteUser);
 
 module.exports = router; 

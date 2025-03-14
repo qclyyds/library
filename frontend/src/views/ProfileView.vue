@@ -45,64 +45,117 @@
 
           <!-- 管理员功能部分 -->
           <div v-if="authStore.user?.role === 'admin'" class="admin-panel">
-            <div class="admin-section">
-              <div class="d-flex justify-content-between align-items-center">
-                <h3 class="admin-title mb-0">管理员功能</h3>
-                <div class="admin-actions">
-                  <button class="btn btn-primary me-2" @click="addBook">
-                    添加图书
-                  </button>
-                  <button class="btn btn-info" @click="showBookList = !showBookList">
-                    {{ showBookList ? '隐藏图书列表' : '显示图书列表' }}
-                  </button>
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="admin-title mb-0">管理员功能</h3>
+              <div class="admin-actions">
+                <button class="btn btn-primary me-2" @click="addBook">
+                  添加图书
+                </button>
+                <button class="btn btn-success me-2" @click="addUser">
+                  添加用户
+                </button>
+                <button class="btn btn-info me-2" @click="showBookList = !showBookList">
+                  {{ showBookList ? '隐藏图书列表' : '显示图书列表' }}
+                </button>
+                <button class="btn btn-warning" @click="showUserList = !showUserList">
+                  {{ showUserList ? '隐藏用户列表' : '显示用户列表' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 图书列表 -->
+            <div v-if="showBookList" class="book-list mt-4">
+              <div v-if="loading" class="text-center">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">加载中...</span>
                 </div>
               </div>
+              
+              <div v-else-if="error" class="alert alert-danger">
+                {{ error }}
+              </div>
+              
+              <div v-else class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>书名</th>
+                      <th>作者</th>
+                      <th>分类</th>
+                      <th>价格</th>
+                      <th>库存</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="book in books" :key="book.id">
+                      <td>{{ book.id }}</td>
+                      <td>{{ book.title }}</td>
+                      <td>{{ book.author }}</td>
+                      <td>{{ book.category || '未分类' }}</td>
+                      <td>¥{{ book.price }}</td>
+                      <td>{{ book.stock }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-info me-2" @click="editBook(book)">
+                          编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger" @click="deleteBook(book.id)">
+                          删除
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-              <!-- 图书列表 -->
-              <div v-if="showBookList" class="book-list mt-4">
-                <div v-if="loading" class="text-center">
-                  <div class="spinner-border" role="status">
-                    <span class="visually-hidden">加载中...</span>
-                  </div>
+            <!-- 用户列表 -->
+            <div v-if="showUserList" class="user-list mt-4">
+              <div v-if="userLoading" class="text-center">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">加载中...</span>
                 </div>
-                
-                <div v-else-if="error" class="alert alert-danger">
-                  {{ error }}
-                </div>
-                
-                <div v-else class="table-responsive">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>书名</th>
-                        <th>作者</th>
-                        <th>分类</th>
-                        <th>价格</th>
-                        <th>库存</th>
-                        <th>操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="book in books" :key="book.id">
-                        <td>{{ book.id }}</td>
-                        <td>{{ book.title }}</td>
-                        <td>{{ book.author }}</td>
-                        <td>{{ book.category || '未分类' }}</td>
-                        <td>¥{{ book.price }}</td>
-                        <td>{{ book.stock }}</td>
-                        <td>
-                          <button class="btn btn-sm btn-info me-2" @click="editBook(book)">
-                            编辑
-                          </button>
-                          <button class="btn btn-sm btn-danger" @click="deleteBook(book.id)">
-                            删除
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              </div>
+              
+              <div v-else-if="userError" class="alert alert-danger">
+                {{ userError }}
+              </div>
+              
+              <div v-else class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>用户名</th>
+                      <th>邮箱</th>
+                      <th>角色</th>
+                      <th>注册时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="user in users" :key="user.id">
+                      <td>{{ user.id }}</td>
+                      <td>{{ user.username }}</td>
+                      <td>{{ user.email }}</td>
+                      <td>
+                        <span class="badge" :class="user.role === 'admin' ? 'bg-danger' : 'bg-secondary'">
+                          {{ user.role === 'admin' ? '管理员' : '普通用户' }}
+                        </span>
+                      </td>
+                      <td>{{ formatDate(user.created_at) }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-info me-2" @click="editUser(user)">
+                          编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger" @click="deleteUser(user.id)">
+                          删除
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -225,6 +278,69 @@
       </div>
     </div>
   </div>
+
+  <!-- 添加用户编辑模态框 -->
+  <div class="modal fade" id="userModal" tabindex="-1" ref="userModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editingUser ? '编辑用户' : '添加用户' }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="handleUserSubmit">
+            <div class="mb-3">
+              <label for="username" class="form-label">用户名</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="username" 
+                v-model="userForm.username"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">邮箱</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                v-model="userForm.email"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">密码</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                id="password" 
+                v-model="userForm.password"
+                :required="!editingUser"
+              >
+              <small class="text-muted" v-if="editingUser">留空表示不修改密码</small>
+            </div>
+            <div class="mb-3">
+              <label for="role" class="form-label">角色</label>
+              <select 
+                class="form-select" 
+                id="role" 
+                v-model="userForm.role"
+                required
+              >
+                <option value="user">普通用户</option>
+                <option value="admin">管理员</option>
+              </select>
+            </div>
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+              <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -239,12 +355,20 @@ const router = useRouter()
 
 const showAddModal = ref(false)
 const showBookList = ref(false)
+const showUserList = ref(false)
 const loading = ref(false)
 const error = ref(null)
 const books = ref([])
 const editingBook = ref(null)
 const bookModal = ref(null)
 const modalInstance = ref(null)
+
+const userLoading = ref(false)
+const userError = ref(null)
+const users = ref([])
+const editingUser = ref(null)
+const userModal = ref(null)
+const userModalInstance = ref(null)
 
 const bookForm = ref({
   title: '',
@@ -255,6 +379,13 @@ const bookForm = ref({
   stock: 0,
   cover_image: '',
   featured: false
+})
+
+const userForm = ref({
+  username: '',
+  email: '',
+  password: '',
+  role: 'user'
 })
 
 function formatDate(dateString) {
@@ -379,6 +510,101 @@ async function handleSubmit() {
   }
 }
 
+// 获取所有用户
+async function fetchUsers() {
+  userLoading.value = true
+  userError.value = null
+  
+  try {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    console.log('获取用户列表...')
+    const response = await axios.get('http://localhost:3000/api/admin/users')
+    console.log('获取用户列表成功:', response.data.length, '条记录')
+    users.value = response.data
+  } catch (err) {
+    console.error('获取用户列表错误:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    userError.value = '获取用户列表失败：' + (err.response?.data?.message || err.message)
+  } finally {
+    userLoading.value = false
+  }
+}
+
+// 删除用户
+async function deleteUser(userId) {
+  if (!confirm('确定要删除这个用户吗？')) return
+  
+  try {
+    console.log('删除用户ID:', userId)
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    const response = await axios.delete(`http://localhost:3000/api/admin/users/${userId}`)
+    console.log('删除响应:', response.data)
+    await fetchUsers()
+  } catch (err) {
+    console.error('删除用户错误详情:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('删除用户失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+// 编辑用户
+function editUser(user) {
+  editingUser.value = user
+  userForm.value = {
+    username: user.username || '',
+    email: user.email || '',
+    password: '',
+    role: user.role || 'user'
+  }
+  userModalInstance.value.show()
+}
+
+// 添加用户
+function addUser() {
+  editingUser.value = null
+  userForm.value = {
+    username: '',
+    email: '',
+    password: '',
+    role: 'user'
+  }
+  userModalInstance.value.show()
+}
+
+// 处理用户表单提交
+async function handleUserSubmit() {
+  try {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    if (editingUser.value) {
+      // 更新用户
+      console.log('更新用户数据:', userForm.value)
+      const response = await axios.put(`http://localhost:3000/api/admin/users/${editingUser.value.id}`, userForm.value)
+      console.log('更新响应:', response.data)
+    } else {
+      // 添加用户
+      console.log('添加用户数据:', userForm.value)
+      const response = await axios.post('http://localhost:3000/api/admin/users', userForm.value)
+      console.log('添加响应:', response.data)
+    }
+    
+    userModalInstance.value.hide()
+    await fetchUsers()
+  } catch (err) {
+    console.error('保存用户错误详情:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('保存用户失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
 // 监听showBookList变化，当显示列表时加载数据
 watch(showBookList, (newVal) => {
   if (newVal) {
@@ -386,10 +612,18 @@ watch(showBookList, (newVal) => {
   }
 });
 
+// 监听showUserList变化，当显示列表时加载数据
+watch(showUserList, (newVal) => {
+  if (newVal) {
+    fetchUsers()
+  }
+})
+
 onMounted(() => {
   // 初始化模态框
   try {
     modalInstance.value = new Modal(bookModal.value)
+    userModalInstance.value = new Modal(userModal.value)
   } catch (err) {
     console.error('初始化模态框失败:', err)
   }
@@ -825,5 +1059,50 @@ onMounted(() => {
   .admin-section {
     padding: 20px 15px;
   }
+}
+
+/* 添加用户列表样式 */
+.user-list {
+  margin-top: 30px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 用户角色标签样式 */
+.badge {
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.bg-danger {
+  background-color: #e74c3c !important;
+}
+
+.bg-secondary {
+  background-color: #95a5a6 !important;
+}
+
+/* 自定义用户列表滚动条样式 */
+.user-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.user-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.user-list::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 10px;
+}
+
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }
 </style> 
