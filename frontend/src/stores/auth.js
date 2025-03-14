@@ -4,10 +4,10 @@ import { ref, computed } from 'vue'
 import router from '../router'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
-  const token = ref(localStorage.getItem('token') || '')
+  const user = ref(null)
+  const token = ref(localStorage.getItem('token'))
   
-  const isLoggedIn = computed(() => !!token.value)
+  const isLoggedIn = ref(!!token.value)
   
   async function login(email, password) {
     try {
@@ -16,55 +16,51 @@ export const useAuthStore = defineStore('auth', () => {
         password
       })
       
-      const userData = response.data
+      const { token: newToken, user: userData } = response.data
       
-      user.value = userData.user
-      token.value = userData.token
+      token.value = newToken
+      user.value = userData
+      isLoggedIn.value = true
       
-      localStorage.setItem('user', JSON.stringify(userData.user))
-      localStorage.setItem('token', userData.token)
+      localStorage.setItem('token', newToken)
       
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+      // 设置 axios 默认 headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
       
       return { success: true }
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || '登录失败，请稍后重试'
+      return {
+        success: false,
+        message: error.response?.data?.message || '登录失败'
       }
     }
   }
   
-  async function register(username, email, password) {
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/register', {
-        username,
-        email,
-        password
-      })
-      
-      return { success: true, message: response.data.message }
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || '注册失败，请稍后重试'
-      }
-    }
+  async function register(userData) {
+    const response = await axios.post('http://localhost:3000/api/auth/register', userData)
+    return response.data
   }
   
   function logout() {
+    token.value = null
     user.value = null
-    token.value = ''
-    localStorage.removeItem('user')
+    isLoggedIn.value = false
     localStorage.removeItem('token')
     delete axios.defaults.headers.common['Authorization']
     router.push('/login')
   }
   
-  // 初始化请求头
+  // 如果有 token，设置 axios 默认 headers
   if (token.value) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
   }
   
-  return { user, isLoggedIn, login, register, logout }
+  return {
+    user,
+    token,
+    isLoggedIn,
+    login,
+    register,
+    logout
+  }
 }) 

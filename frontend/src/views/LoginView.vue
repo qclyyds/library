@@ -1,46 +1,51 @@
 <template>
-  <div class="login row justify-content-center">
-    <div class="col-12 col-xl-11">
-      <div class="card">
-        <div class="card-header">登录</div>
-        <div class="card-body">
-          <div v-if="error" class="alert alert-danger">
-            {{ error }}
+  <div class="login">
+    <div class="login-container">
+      <div class="login-box">
+        <h2 class="login-title">登录</h2>
+        
+        <form @submit.prevent="handleSubmit" class="login-form">
+          <div class="form-group">
+            <label for="email">邮箱</label>
+            <input
+              type="email"
+              id="email"
+              v-model="email"
+              class="form-control"
+              placeholder="请输入邮箱"
+              required
+            >
           </div>
           
-          <form @submit.prevent="handleLogin" class="login-form">
-            <div class="mb-4">
-              <label for="email" class="form-label">邮箱</label>
-              <input 
-                type="email" 
-                class="form-control form-control-lg" 
-                id="email" 
-                v-model="email" 
-                required
-                placeholder="请输入您的邮箱"
-              >
-            </div>
-            
-            <div class="mb-4">
-              <label for="password" class="form-label">密码</label>
-              <input 
-                type="password" 
-                class="form-control form-control-lg" 
-                id="password" 
-                v-model="password" 
-                required
-                placeholder="请输入您的密码"
-              >
-            </div>
-            
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5">
-              <button type="submit" class="btn btn-primary btn-lg mb-3 mb-md-0 px-5" :disabled="loading">
-                <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                登录
-              </button>
-              <RouterLink to="/register" class="text-center fs-5">没有账号？去注册</RouterLink>
-            </div>
-          </form>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              v-model="password"
+              class="form-control"
+              placeholder="请输入密码"
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <button 
+              type="submit" 
+              class="submit-btn"
+              :disabled="loading"
+            >
+              {{ loading ? '登录中...' : '登录' }}
+            </button>
+          </div>
+          
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+        </form>
+        
+        <div class="register-link">
+          没有账号？ <RouterLink to="/register">去注册</RouterLink>
         </div>
       </div>
     </div>
@@ -49,7 +54,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -58,23 +63,21 @@ const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
-const error = ref('')
+const error = ref(null)
 
-async function handleLogin() {
+async function handleSubmit() {
   loading.value = true
-  error.value = ''
+  error.value = null
   
   try {
     const result = await authStore.login(email.value, password.value)
-    
     if (result.success) {
       router.push('/')
     } else {
       error.value = result.message
     }
   } catch (err) {
-    error.value = '登录失败，请稍后重试'
-    console.error(err)
+    error.value = '登录失败，请重试'
   } finally {
     loading.value = false
   }
@@ -82,42 +85,117 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.card {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  border: none;
-  margin: 2rem auto;
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+  padding: 20px;
 }
 
-.card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  padding: 1.25rem 2rem;
-  font-size: 1.5rem;
-  font-weight: 500;
+.login-container {
+  width: 100%;
+  max-width: 420px;
 }
 
-.card-body {
-  padding: 2.5rem;
+.login-box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 .login-form {
-  max-width: 800px;
-  margin: 0 auto;
+  margin-bottom: 20px;
 }
 
-.form-label {
-  font-size: 1.1rem;
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
   font-weight: 500;
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .card-body {
-    padding: 1.5rem;
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.form-control:focus {
+  border-color: #409eff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #409eff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: #66b1ff;
+}
+
+.submit-btn:disabled {
+  background-color: #a0cfff;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #f56c6c;
+  font-size: 14px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.register-link {
+  text-align: center;
+  font-size: 14px;
+  color: #606266;
+}
+
+.register-link a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  color: #66b1ff;
+}
+
+@media (max-width: 480px) {
+  .login-box {
+    padding: 30px 20px;
   }
   
-  .card-header {
-    padding: 1rem 1.5rem;
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 20px;
   }
 }
 </style> 

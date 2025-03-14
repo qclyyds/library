@@ -40,6 +40,30 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue')
+    },
+    // 管理员路由
+    {
+      path: '/admin',
+      component: () => import('../views/admin/AdminLayout.vue'),
+      meta: { requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          redirect: '/admin/books'
+        },
+        {
+          path: 'books',
+          component: () => import('../views/admin/BooksManageView.vue')
+        },
+        {
+          path: 'orders',
+          component: () => import('../views/admin/OrdersManageView.vue')
+        },
+        {
+          path: 'users',
+          component: () => import('../views/admin/UsersManageView.vue')
+        }
+      ]
     }
   ]
 })
@@ -49,6 +73,8 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    next('/login')
+  } else if (to.meta.requiresAdmin && (!authStore.isLoggedIn || authStore.user?.role !== 'admin')) {
     next('/login')
   } else {
     next()

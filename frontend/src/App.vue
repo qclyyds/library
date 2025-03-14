@@ -32,7 +32,7 @@ function logout() {
             </li>
           </ul>
           <ul class="navbar-nav">
-            <template v-if="authStore.isLoggedIn">
+            <template v-if="authStore.isLoggedIn && authStore.user">
               <li class="nav-item">
                 <RouterLink class="nav-link fs-5 mx-2" to="/profile">
                   {{ authStore.user.username }}的个人中心

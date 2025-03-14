@@ -17,10 +17,12 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require('./routes/auth');
 const booksRoutes = require('./routes/books');
 const ordersRoutes = require('./routes/orders');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/books', booksRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 基础路由
 app.get('/', (req, res) => {
