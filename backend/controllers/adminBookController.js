@@ -29,7 +29,7 @@ exports.getBook = async (req, res) => {
 // 添加图书
 exports.addBook = async (req, res) => {
   try {
-    const { title, author, description, price, stock, cover_url } = req.body;
+    const { title, author, description, price, stock, cover_image, category, featured } = req.body;
     
     if (!title || !author || !price || price <= 0) {
       return res.status(400).json({ message: '请提供有效的图书信息' });
@@ -41,7 +41,9 @@ exports.addBook = async (req, res) => {
       description: description || '',
       price,
       stock: stock || 0,
-      cover_url: cover_url || ''
+      cover_image: cover_image || '',
+      category: category || '',
+      featured: featured || false
     });
     
     res.status(201).json({ 
@@ -57,7 +59,7 @@ exports.addBook = async (req, res) => {
 exports.updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const { title, author, description, price, stock, cover_url } = req.body;
+    const { title, author, description, price, stock, cover_image, category, featured } = req.body;
     
     const book = await Book.getById(bookId);
     if (!book) {
@@ -74,7 +76,9 @@ exports.updateBook = async (req, res) => {
       description,
       price,
       stock,
-      cover_url
+      cover_image,
+      category,
+      featured
     });
     
     res.json({ message: '图书更新成功' });

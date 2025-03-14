@@ -4,41 +4,223 @@
       <div class="profile-box">
         <h2 class="profile-title">个人中心</h2>
         
-        <div class="user-info" v-if="authStore.user">
-          <div class="avatar-section">
-            <div class="avatar">
-              {{ authStore.user.username.charAt(0).toUpperCase() }}
-            </div>
-            <span class="role-badge" :class="{'is-admin': authStore.user.role === 'admin'}">
-              {{ authStore.user.role === 'admin' ? '管理员' : '普通用户' }}
-            </span>
-          </div>
-          
-          <div class="info-section">
-            <div class="info-item">
-              <label>用户名</label>
-              <span>{{ authStore.user.username }}</span>
+        <div v-if="authStore.user" class="profile-content">
+          <!-- 用户信息部分 -->
+          <div class="user-panel">
+            <div class="avatar-section">
+              <div class="avatar">
+                {{ authStore.user.username.charAt(0).toUpperCase() }}
+              </div>
+              <span class="role-badge" :class="{'is-admin': authStore.user.role === 'admin'}">
+                {{ authStore.user.role === 'admin' ? '管理员' : '普通用户' }}
+              </span>
             </div>
             
-            <div class="info-item">
-              <label>邮箱</label>
-              <span>{{ authStore.user.email }}</span>
+            <div class="info-section">
+              <div class="info-item">
+                <label>用户名</label>
+                <span>{{ authStore.user.username }}</span>
+              </div>
+              
+              <div class="info-item">
+                <label>邮箱</label>
+                <span>{{ authStore.user.email }}</span>
+              </div>
+              
+              <div class="info-item">
+                <label>注册时间</label>
+                <span>{{ formatDate(authStore.user.created_at) }}</span>
+              </div>
             </div>
             
-            <div class="info-item">
-              <label>注册时间</label>
-              <span>{{ formatDate(authStore.user.created_at) }}</span>
+            <div class="action-section">
+              <button 
+                class="logout-btn"
+                @click="handleLogout"
+              >
+                退出登录
+              </button>
             </div>
           </div>
-          
-          <div class="action-section">
-            <button 
-              class="logout-btn"
-              @click="handleLogout"
-            >
-              退出登录
-            </button>
+
+          <!-- 管理员功能部分 -->
+          <div v-if="authStore.user?.role === 'admin'" class="admin-panel">
+            <div class="admin-section">
+              <div class="d-flex justify-content-between align-items-center">
+                <h3 class="admin-title mb-0">管理员功能</h3>
+                <div class="admin-actions">
+                  <button class="btn btn-primary me-2" @click="addBook">
+                    添加图书
+                  </button>
+                  <button class="btn btn-info" @click="showBookList = !showBookList">
+                    {{ showBookList ? '隐藏图书列表' : '显示图书列表' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 图书列表 -->
+              <div v-if="showBookList" class="book-list mt-4">
+                <div v-if="loading" class="text-center">
+                  <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                  </div>
+                </div>
+                
+                <div v-else-if="error" class="alert alert-danger">
+                  {{ error }}
+                </div>
+                
+                <div v-else class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>书名</th>
+                        <th>作者</th>
+                        <th>分类</th>
+                        <th>价格</th>
+                        <th>库存</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="book in books" :key="book.id">
+                        <td>{{ book.id }}</td>
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.author }}</td>
+                        <td>{{ book.category || '未分类' }}</td>
+                        <td>¥{{ book.price }}</td>
+                        <td>{{ book.stock }}</td>
+                        <td>
+                          <button class="btn btn-sm btn-info me-2" @click="editBook(book)">
+                            编辑
+                          </button>
+                          <button class="btn btn-sm btn-danger" @click="deleteBook(book.id)">
+                            删除
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加/编辑图书的模态框 -->
+  <div class="modal fade" id="bookModal" tabindex="-1" ref="bookModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editingBook ? '编辑图书' : '添加图书' }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="handleSubmit">
+            <div class="mb-3">
+              <label for="title" class="form-label">书名</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="title" 
+                v-model="bookForm.title"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="author" class="form-label">作者</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="author" 
+                v-model="bookForm.author"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">描述</label>
+              <textarea 
+                class="form-control" 
+                id="description" 
+                v-model="bookForm.description"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="category" class="form-label">分类</label>
+              <select 
+                class="form-select" 
+                id="category" 
+                v-model="bookForm.category"
+              >
+                <option value="">请选择分类</option>
+                <option value="文学小说">文学小说</option>
+                <option value="科幻小说">科幻小说</option>
+                <option value="计算机技术">计算机技术</option>
+                <option value="历史">历史</option>
+                <option value="经济管理">经济管理</option>
+                <option value="悬疑推理">悬疑推理</option>
+                <option value="人工智能">人工智能</option>
+                <option value="教育">教育</option>
+                <option value="投资理财">投资理财</option>
+                <option value="世界史">世界史</option>
+                <option value="中国史">中国史</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="price" class="form-label">价格</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="price" 
+                v-model="bookForm.price"
+                min="0"
+                step="0.01"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="stock" class="form-label">库存</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="stock" 
+                v-model="bookForm.stock"
+                min="0"
+                required
+              >
+            </div>
+            <div class="mb-3">
+              <label for="cover_image" class="form-label">封面图片URL</label>
+              <input 
+                type="url" 
+                class="form-control" 
+                id="cover_image" 
+                v-model="bookForm.cover_image"
+              >
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  id="featured" 
+                  v-model="bookForm.featured"
+                >
+                <label class="form-check-label" for="featured">
+                  推荐图书
+                </label>
+              </div>
+            </div>
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+              <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -46,11 +228,34 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import { Modal } from 'bootstrap'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const router = useRouter()
+
+const showAddModal = ref(false)
+const showBookList = ref(false)
+const loading = ref(false)
+const error = ref(null)
+const books = ref([])
+const editingBook = ref(null)
+const bookModal = ref(null)
+const modalInstance = ref(null)
+
+const bookForm = ref({
+  title: '',
+  author: '',
+  description: '',
+  category: '',
+  price: 0,
+  stock: 0,
+  cover_image: '',
+  featured: false
+})
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -64,6 +269,153 @@ async function handleLogout() {
     router.push('/login')
   }
 }
+
+// 获取所有图书
+async function fetchBooks() {
+  loading.value = true
+  error.value = null
+  
+  try {
+    // 重新设置认证头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    console.log('获取图书列表...')
+    const response = await axios.get('http://localhost:3000/api/admin/books')
+    console.log('获取图书列表成功:', response.data.length, '条记录')
+    books.value = response.data
+  } catch (err) {
+    console.error('获取图书列表错误:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    error.value = '获取图书列表失败：' + (err.response?.data?.message || err.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 删除图书
+async function deleteBook(bookId) {
+  if (!confirm('确定要删除这本图书吗？')) return
+  
+  try {
+    console.log('删除图书ID:', bookId)
+    console.log('当前token:', localStorage.getItem('token'))
+    
+    // 重新设置认证头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    // 使用完整URL以避免baseURL配置问题
+    const response = await axios.delete(`http://localhost:3000/api/admin/books/${bookId}`)
+    console.log('删除响应:', response.data)
+    await fetchBooks()
+  } catch (err) {
+    console.error('删除图书错误详情:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('删除图书失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+// 编辑图书
+function editBook(book) {
+  editingBook.value = book
+  bookForm.value = {
+    title: book.title || '',
+    author: book.author || '',
+    description: book.description || '',
+    category: book.category || '',
+    price: book.price || 0,
+    stock: book.stock || 0,
+    cover_image: book.cover_image || '',
+    featured: book.featured || false
+  }
+  modalInstance.value.show()
+}
+
+// 添加图书
+function addBook() {
+  editingBook.value = null
+  bookForm.value = {
+    title: '',
+    author: '',
+    description: '',
+    category: '',
+    price: 0,
+    stock: 0,
+    cover_image: '',
+    featured: false
+  }
+  modalInstance.value.show()
+}
+
+// 处理表单提交
+async function handleSubmit() {
+  try {
+    // 重新设置认证头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    if (editingBook.value) {
+      // 更新图书
+      console.log('更新图书数据:', bookForm.value)
+      const response = await axios.put(`http://localhost:3000/api/admin/books/${editingBook.value.id}`, bookForm.value)
+      console.log('更新响应:', response.data)
+    } else {
+      // 添加图书
+      console.log('添加图书数据:', bookForm.value)
+      const response = await axios.post('http://localhost:3000/api/admin/books', bookForm.value)
+      console.log('添加响应:', response.data)
+    }
+    
+    modalInstance.value.hide()
+    await fetchBooks()
+  } catch (err) {
+    console.error('保存图书错误详情:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('保存图书失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+// 监听showBookList变化，当显示列表时加载数据
+watch(showBookList, (newVal) => {
+  if (newVal) {
+    fetchBooks();
+  }
+});
+
+onMounted(() => {
+  // 初始化模态框
+  try {
+    modalInstance.value = new Modal(bookModal.value)
+  } catch (err) {
+    console.error('初始化模态框失败:', err)
+  }
+  
+  // 检查登录状态和认证token
+  if (!authStore.isLoggedIn) {
+    console.warn('用户未登录，无法进行管理员操作')
+    return
+  }
+  
+  if (authStore.user?.role !== 'admin') {
+    console.warn('当前用户不是管理员，无法进行管理员操作')
+    return
+  }
+  
+  // 确保已设置Authorization header
+  const token = localStorage.getItem('token')
+  if (!token) {
+    console.error('未找到认证token，请重新登录')
+    return
+  }
+  
+  // 设置认证头
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  console.log('已设置Authorization header')
+})
 </script>
 
 <style scoped>
@@ -72,74 +424,120 @@ async function handleLogout() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f7fa;
-  padding: 20px;
+  background-color: #f0f2f5;
+  padding: 30px 20px;
 }
 
 .profile-container {
   width: 100%;
-  max-width: 480px;
+  max-width: 1200px;
+  transition: all 0.3s ease;
 }
 
 .profile-box {
   background: white;
   padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
 .profile-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   color: #2c3e50;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
+  position: relative;
 }
 
-.user-info {
+.profile-title::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #409eff, #64b5f6);
+  border-radius: 2px;
+}
+
+.profile-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.user-panel {
+  flex: 1;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
+  gap: 35px;
+}
+
+.admin-panel {
+  flex: 2;
+  min-width: 400px;
 }
 
 .avatar-section {
   text-align: center;
+  position: relative;
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
-  background-color: #409eff;
+  background: linear-gradient(135deg, #409eff, #64b5f6);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 600;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 16px rgba(64, 158, 255, 0.3);
+  transition: all 0.3s ease;
+  border: 5px solid white;
+}
+
+.avatar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 20px rgba(64, 158, 255, 0.4);
 }
 
 .role-badge {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
   background-color: #95a5a6;
   color: white;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 0;
+  right: -10px;
 }
 
 .role-badge.is-admin {
-  background-color: #e74c3c;
+  background: linear-gradient(135deg, #e74c3c, #ff7675);
 }
 
 .info-section {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  background-color: #f8f9fa;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .info-item {
@@ -151,50 +549,281 @@ async function handleLogout() {
 .info-item label {
   color: #7f8c8d;
   font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.info-item label::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #409eff;
+  border-radius: 50%;
+  margin-right: 8px;
 }
 
 .info-item span {
   color: #2c3e50;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 10px;
+  background-color: white;
+  border-radius: 8px;
+  border-left: 3px solid #409eff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .action-section {
   width: 100%;
   display: flex;
   justify-content: center;
+  margin-top: 10px;
 }
 
 .logout-btn {
-  padding: 10px 24px;
-  background-color: #f56c6c;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #f56c6c, #ff9b9b);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(245, 108, 108, 0.3);
 }
 
 .logout-btn:hover {
-  background-color: #f78989;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(245, 108, 108, 0.4);
 }
 
-@media (max-width: 480px) {
+.logout-btn:active {
+  transform: translateY(1px);
+}
+
+.admin-section {
+  width: 100%;
+  height: 100%;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #e74c3c;
+}
+
+.admin-title {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.admin-title::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 20px;
+  background-color: #e74c3c;
+  margin-right: 10px;
+  border-radius: 3px;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.admin-actions button {
+  transition: all 0.3s;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 10px 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.admin-actions button:active {
+  transform: translateY(1px);
+}
+
+.book-list {
+  margin-top: 30px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: #f2f6fc;
+  color: #2c3e50;
+  font-weight: 600;
+  border: none;
+  padding: 15px;
+}
+
+.table tbody td {
+  padding: 12px 15px;
+  vertical-align: middle;
+  border-color: #eef2f7;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #f8f9fa;
+}
+
+.btn-sm {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 5px 12px;
+  transition: all 0.2s;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.book-cover {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 自定义滚动条样式 */
+.book-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.book-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.book-list::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 10px;
+}
+
+.book-list::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .profile-container {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 992px) {
+  .profile-content {
+    flex-direction: column;
+  }
+  
+  .user-panel, .admin-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
   .profile-box {
     padding: 30px 20px;
   }
   
-  .profile-title {
-    font-size: 20px;
-    margin-bottom: 20px;
+  .admin-actions {
+    flex-direction: row;
+  }
+  
+  .admin-actions .btn {
+    font-size: 14px;
+    padding: 8px 15px;
+  }
+  
+  .info-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
   
   .avatar {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 90px;
+    height: 90px;
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 576px) {
+  .d-flex.justify-content-between.align-items-center {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 15px;
+  }
+
+  .admin-title {
+    margin-bottom: 15px;
+  }
+  
+  .admin-actions {
+    width: 100%;
+  }
+  
+  .admin-actions .btn {
+    flex: 1;
+  }
+  
+  .table thead th,
+  .table tbody td {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-box {
+    padding: 25px 15px;
+    border-radius: 12px;
+  }
+  
+  .profile-title {
+    font-size: 22px;
+    margin-bottom: 30px;
+  }
+  
+  .avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 28px;
+  }
+  
+  .admin-section {
+    padding: 20px 15px;
   }
 }
 </style> 
