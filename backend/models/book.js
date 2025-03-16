@@ -104,6 +104,12 @@ class Book {
     await db.query('DELETE FROM books WHERE id = ?', [id]);
     return true;
   }
+
+  // 专门更新图书的推荐状态
+  static async updateFeatured(id, featured) {
+    await db.query('UPDATE books SET featured = ? WHERE id = ?', [featured ? 1 : 0, id]);
+    return true;
+  }
 }
 
 module.exports = Book; 

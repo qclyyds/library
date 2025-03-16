@@ -94,7 +94,7 @@
               <div class="card book-card">
                 <div class="card-img-wrapper">
                   <img 
-                    :src="book.cover || 'https://via.placeholder.com/150x200?text=暂无封面'" 
+                    :src="book.cover_image ? `http://localhost:3000${book.cover_image}` : 'https://via.placeholder.com/150x200?text=暂无封面'" 
                     class="card-img-top" 
                     :alt="book.title"
                   >
@@ -351,15 +351,12 @@ function nextPage() {
 /* 右侧内容区固定最小高度 */
 .content-area {
   min-height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px); /* 限制最大高度 */
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 防止内容溢出 */
 }
 
 /* 确保图书网格区域可以滚动 */
 .books-grid {
-  height: calc(100vh - 250px); /* 固定高度，减去头部、分页和其他元素的高度 */
   overflow-y: auto; /* 垂直滚动 */
   padding-right: 5px; /* 为滚动条预留空间 */
   margin-bottom: 0; /* 移除底部边距 */
@@ -451,6 +448,8 @@ function nextPage() {
   position: sticky;
   bottom: 0;
   width: 100%;
+  z-index: 10;
+  box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
 }
 
 /* 加载指示器垂直居中 */
@@ -503,11 +502,10 @@ function nextPage() {
   
   /* 调整图书网格高度为自适应 */
   .books-grid {
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-    border: none;
-  }
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
   
   .card-title, .card-subtitle {
     height: auto;

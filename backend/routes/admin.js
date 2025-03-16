@@ -4,13 +4,15 @@ const adminAuth = require('../middleware/adminAuth');
 const adminBookController = require('../controllers/adminBookController');
 const adminOrderController = require('../controllers/adminOrderController');
 const adminUserController = require('../controllers/adminUserController');
+const upload = require('../middleware/upload');
 
 // 图书管理路由
 router.get('/books', adminAuth, adminBookController.getAllBooks);
 router.get('/books/:id', adminAuth, adminBookController.getBook);
-router.post('/books', adminAuth, adminBookController.addBook);
-router.put('/books/:id', adminAuth, adminBookController.updateBook);
+router.post('/books', adminAuth, upload.single('cover_image'), adminBookController.addBook);
+router.put('/books/:id', adminAuth, upload.single('cover_image'), adminBookController.updateBook);
 router.delete('/books/:id', adminAuth, adminBookController.deleteBook);
+router.patch('/books/:id/featured', adminAuth, adminBookController.updateFeaturedStatus);
 
 // 订单管理路由
 router.get('/orders', adminAuth, adminOrderController.getAllOrders);

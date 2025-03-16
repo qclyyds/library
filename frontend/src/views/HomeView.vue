@@ -23,6 +23,12 @@
     <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
       <div v-for="book in bookStore.featuredBooks" :key="book.id" class="col">
         <div class="card h-100">
+          <img 
+            :src="book.cover_image ? `http://localhost:3000${book.cover_image}` : 'https://via.placeholder.com/300x400?text=暂无封面'" 
+            class="card-img-top" 
+            :alt="book.title"
+            style="height: 200px; object-fit: cover;"
+          >
           <div class="card-body">
             <h5 class="card-title">{{ book.title }}</h5>
             <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>

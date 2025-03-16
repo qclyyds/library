@@ -161,7 +161,7 @@ async function handleSubmit() {
 
 .register-box {
   background: white;
-  padding: 40px;
+  padding: 60px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

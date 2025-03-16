@@ -16,7 +16,12 @@
     
     <div v-else class="row">
       <div class="col-md-4 mb-4 mb-md-0 text-center">
-        <img src="https://via.placeholder.com/300x400" alt="Book Cover" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+        <img 
+          :src="bookStore.currentBook.cover_image ? `http://localhost:3000${bookStore.currentBook.cover_image}` : 'https://via.placeholder.com/300x400?text=暂无封面'" 
+          :alt="bookStore.currentBook.title" 
+          class="img-fluid rounded shadow-sm" 
+          style="max-height: 400px;"
+        >
       </div>
       
       <div class="col-md-8">

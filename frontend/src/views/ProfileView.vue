@@ -85,6 +85,7 @@
                       <th>分类</th>
                       <th>价格</th>
                       <th>库存</th>
+                      <th>推荐</th>
                       <th>操作</th>
                     </tr>
                   </thead>
@@ -97,8 +98,28 @@
                       <td>¥{{ book.price }}</td>
                       <td>{{ book.stock }}</td>
                       <td>
+                        <span v-if="book.featured" class="badge bg-success">推荐</span>
+                        <span v-else class="badge bg-secondary">普通</span>
+                      </td>
+                      <td>
                         <button class="btn btn-sm btn-info me-2" @click="editBook(book)">
                           编辑
+                        </button>
+                        <button 
+                          v-if="book.featured" 
+                          class="btn btn-sm btn-warning me-2" 
+                          @click="cancelFeatured(book.id)"
+                          title="取消推荐"
+                        >
+                          取消推荐
+                        </button>
+                        <button 
+                          v-else
+                          class="btn btn-sm btn-success me-2" 
+                          @click="setFeatured(book.id)"
+                          title="设为推荐"
+                        >
+                          设为推荐
                         </button>
                         <button class="btn btn-sm btn-danger" @click="deleteBook(book.id)">
                           删除
@@ -248,13 +269,23 @@
               >
             </div>
             <div class="mb-3">
-              <label for="cover_image" class="form-label">封面图片URL</label>
+              <label for="cover_image" class="form-label">封面图片</label>
               <input 
-                type="url" 
+                type="file" 
                 class="form-control" 
                 id="cover_image" 
-                v-model="bookForm.cover_image"
+                @change="handleFileUpload"
+                accept="image/*"
               >
+              <small class="text-muted d-block mt-1">* 如不更换封面，请留空</small>
+              <div v-if="imagePreview" class="mt-2">
+                <img :src="imagePreview" alt="预览" class="img-thumbnail" style="height: 100px;">
+                <p class="small text-muted">新封面预览</p>
+              </div>
+              <div v-else-if="editingBook && editingBook.cover_image" class="mt-2">
+                <img :src="editingBook.cover_image.startsWith('http') ? editingBook.cover_image : `http://localhost:3000${editingBook.cover_image}`" alt="当前封面" class="img-thumbnail" style="height: 100px;">
+                <p class="small text-muted">当前封面图片（保持不变）</p>
+              </div>
             </div>
             <div class="mb-3">
               <div class="form-check">
@@ -265,8 +296,9 @@
                   v-model="bookForm.featured"
                 >
                 <label class="form-check-label" for="featured">
-                  推荐图书
+                  设为推荐图书
                 </label>
+                <small class="text-muted d-block">推荐的图书将会在首页展示</small>
               </div>
             </div>
             <div class="text-end">
@@ -362,6 +394,8 @@ const books = ref([])
 const editingBook = ref(null)
 const bookModal = ref(null)
 const modalInstance = ref(null)
+const imagePreview = ref(null)
+const selectedFile = ref(null)
 
 const userLoading = ref(false)
 const userError = ref(null)
@@ -449,19 +483,77 @@ async function deleteBook(bookId) {
   }
 }
 
+// 设置为推荐图书
+async function setFeatured(bookId) {
+  try {
+    console.log('设置图书ID为推荐:', bookId)
+    // 重新设置认证头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    const response = await axios.patch(`http://localhost:3000/api/admin/books/${bookId}/featured`, { 
+      featured: true 
+    })
+    console.log('设置推荐响应:', response.data)
+    
+    alert('已设置为推荐图书')
+    await fetchBooks()
+  } catch (err) {
+    console.error('设置推荐失败:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('设置推荐失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+// 取消推荐图书
+async function cancelFeatured(bookId) {
+  try {
+    console.log('取消图书ID的推荐:', bookId)
+    // 重新设置认证头
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
+    
+    const response = await axios.patch(`http://localhost:3000/api/admin/books/${bookId}/featured`, { 
+      featured: false 
+    })
+    console.log('取消推荐响应:', response.data)
+    
+    alert('已取消推荐状态')
+    await fetchBooks()
+  } catch (err) {
+    console.error('取消推荐失败:', err)
+    if (err.response) {
+      console.error('错误响应:', err.response.status, err.response.data)
+    }
+    alert('取消推荐失败：' + (err.response?.data?.message || err.message))
+  }
+}
+
+// 处理文件上传
+function handleFileUpload(event) {
+  const file = event.target.files[0]
+  if (file) {
+    selectedFile.value = file
+    
+    // 创建图片预览
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 // 编辑图书
 function editBook(book) {
   editingBook.value = book
   bookForm.value = {
-    title: book.title || '',
-    author: book.author || '',
-    description: book.description || '',
-    category: book.category || '',
-    price: book.price || 0,
-    stock: book.stock || 0,
-    cover_image: book.cover_image || '',
-    featured: book.featured || false
+    ...book,
+    // 确保boolean类型正确，数据库中可能是0/1
+    featured: book.featured === 1 || book.featured === true
   }
+  imagePreview.value = null
+  selectedFile.value = null
   modalInstance.value.show()
 }
 
@@ -472,12 +564,13 @@ function addBook() {
     title: '',
     author: '',
     description: '',
-    category: '',
     price: 0,
     stock: 0,
-    cover_image: '',
+    category: '',
     featured: false
   }
+  imagePreview.value = null
+  selectedFile.value = null
   modalInstance.value.show()
 }
 
@@ -487,15 +580,49 @@ async function handleSubmit() {
     // 重新设置认证头
     axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
     
+    // 创建FormData对象用于文件上传
+    const formData = new FormData()
+    
+    // 添加表单数据
+    Object.keys(bookForm.value).forEach(key => {
+      // 处理布尔值
+      if (key === 'featured') {
+        formData.append(key, bookForm.value[key] ? 'true' : 'false')
+      } else {
+        formData.append(key, bookForm.value[key])
+      }
+    })
+    
+    // 添加文件（如果有）
+    if (selectedFile.value) {
+      formData.append('cover_image', selectedFile.value)
+    }
+    
     if (editingBook.value) {
       // 更新图书
       console.log('更新图书数据:', bookForm.value)
-      const response = await axios.put(`http://localhost:3000/api/admin/books/${editingBook.value.id}`, bookForm.value)
+      const response = await axios.put(
+        `http://localhost:3000/api/admin/books/${editingBook.value.id}`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
       console.log('更新响应:', response.data)
     } else {
       // 添加图书
       console.log('添加图书数据:', bookForm.value)
-      const response = await axios.post('http://localhost:3000/api/admin/books', bookForm.value)
+      const response = await axios.post(
+        'http://localhost:3000/api/admin/books', 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
       console.log('添加响应:', response.data)
     }
     

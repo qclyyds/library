@@ -86,7 +86,7 @@ async function handleSubmit() {
 
 <style scoped>
 .login {
-  min-height: 100vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,9 +101,9 @@ async function handleSubmit() {
 
 .login-box {
   background: white;
-  padding: 40px;
+  padding: 60px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.1);
 }
 
 .login-title {
