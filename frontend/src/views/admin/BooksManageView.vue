@@ -31,8 +31,9 @@
             <th>封面</th>
             <th>书名</th>
             <th>作者</th>
-            <th>价格</th>
-            <th>库存</th>
+            <th>ISBN</th>
+            <th>出版商</th>
+            <th>位置</th>
             <th>推荐</th>
             <th>操作</th>
           </tr>
@@ -46,8 +47,9 @@
             </td>
             <td>{{ book.title }}</td>
             <td>{{ book.author }}</td>
-            <td>¥{{ book.price }}</td>
-            <td>{{ book.stock }}</td>
+            <td>{{ book.isbn || '暂无' }}</td>
+            <td>{{ book.publisher || '暂无' }}</td>
+            <td>{{ book.location || '暂无' }}</td>
             <td>
               <span v-if="book.featured" class="badge bg-success">推荐</span>
               <span v-else class="badge bg-secondary">普通</span>
@@ -122,26 +124,33 @@
               ></textarea>
             </div>
             <div class="mb-3">
-              <label for="price" class="form-label">价格</label>
+              <label for="isbn" class="form-label">ISBN</label>
               <input 
-                type="number" 
+                type="text" 
                 class="form-control" 
-                id="price" 
-                v-model="bookForm.price"
-                min="0"
-                step="0.01"
-                required
+                id="isbn" 
+                v-model="bookForm.isbn"
+                placeholder="请输入ISBN号"
               >
             </div>
             <div class="mb-3">
-              <label for="stock" class="form-label">库存</label>
+              <label for="publisher" class="form-label">出版商</label>
               <input 
-                type="number" 
+                type="text" 
                 class="form-control" 
-                id="stock" 
-                v-model="bookForm.stock"
-                min="0"
-                required
+                id="publisher" 
+                v-model="bookForm.publisher"
+                placeholder="请输入出版商"
+              >
+            </div>
+            <div class="mb-3">
+              <label for="location" class="form-label">位置</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="location" 
+                v-model="bookForm.location"
+                placeholder="请输入图书位置"
               >
             </div>
             <div class="mb-3">
@@ -152,16 +161,6 @@
                 id="category" 
                 v-model="bookForm.category"
               >
-            </div>
-            <div class="mb-3 form-check">
-              <input 
-                type="checkbox" 
-                class="form-check-input" 
-                id="featured" 
-                v-model="bookForm.featured"
-              >
-              <label class="form-check-label" for="featured">设为推荐图书</label>
-              <small class="text-muted d-block">推荐的图书将会在首页展示</small>
             </div>
             <div class="mb-3">
               <label for="cover_image" class="form-label">封面图片</label>
@@ -181,6 +180,16 @@
                 <img :src="editingBook.cover_image.startsWith('http') ? editingBook.cover_image : `http://localhost:3000${editingBook.cover_image}`" alt="当前封面" class="img-thumbnail" style="height: 100px;">
                 <p class="small text-muted">当前封面图片（保持不变）</p>
               </div>
+            </div>
+            <div class="mb-3 form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="featured" 
+                v-model="bookForm.featured"
+              >
+              <label class="form-check-label" for="featured">设为推荐图书</label>
+              <small class="text-muted d-block">推荐的图书将会在首页展示</small>
             </div>
             <div class="text-end">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -221,8 +230,10 @@ const bookForm = ref({
   title: '',
   author: '',
   description: '',
-  price: 0,
-  stock: 0,
+  isbn: '',
+  publisher: '',
+  location: '',
+  category: '',
   featured: false
 })
 
@@ -324,8 +335,9 @@ function addBook() {
     title: '',
     author: '',
     description: '',
-    price: 0,
-    stock: 0,
+    isbn: '',
+    publisher: '',
+    location: '',
     category: '',
     featured: false
   }

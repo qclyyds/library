@@ -30,21 +30,20 @@
         
         <div class="mb-3">
           <span class="badge bg-primary me-2">{{ bookStore.currentBook.category }}</span>
-          <span v-if="bookStore.currentBook.stock > 0" class="badge bg-success">有库存</span>
-          <span v-else class="badge bg-danger">无库存</span>
+          <span class="badge bg-info me-2">ISBN: {{ bookStore.currentBook.isbn || '暂无' }}</span>
+          <span class="badge bg-secondary me-2">出版商: {{ bookStore.currentBook.publisher || '暂无' }}</span>
+          <span class="badge bg-warning text-dark">位置: {{ bookStore.currentBook.location || '暂无' }}</span>
         </div>
-        
-        <p class="fs-4 fw-bold text-primary mb-3">¥{{ bookStore.currentBook.price }}</p>
         
         <p class="mb-4">{{ bookStore.currentBook.description }}</p>
         
         <div class="d-flex flex-wrap gap-2">
           <button 
             class="btn btn-primary flex-grow-1 flex-md-grow-0" 
-            :disabled="!authStore.isLoggedIn || bookStore.currentBook.stock <= 0"
-            @click="purchaseBook"
+            :disabled="!authStore.isLoggedIn"
+            @click="borrowBook"
           >
-            {{ authStore.isLoggedIn ? '购买' : '请先登录' }}
+            {{ authStore.isLoggedIn ? '借阅' : '请先登录' }}
           </button>
           <button class="btn btn-outline-secondary flex-grow-1 flex-md-grow-0" @click="goBack">返回</button>
         </div>
@@ -75,22 +74,27 @@ function goBack() {
   router.back()
 }
 
-async function purchaseBook() {
+async function borrowBook() {
   if (!authStore.isLoggedIn) {
     router.push('/login')
     return
   }
   
-  const book = bookStore.currentBook
-  const result = await orderStore.createOrder([
-    { bookId: book.id, quantity: 1, price: book.price }
-  ])
-  
-  if (result.success) {
-    alert('购买成功！')
-    router.push('/orders')
-  } else {
-    alert(`购买失败: ${result.message}`)
+  try {
+    const book = bookStore.currentBook
+    const result = await orderStore.createOrder([
+      { bookId: book.id, quantity: 1 }
+    ])
+    
+    if (result.success) {
+      alert('借阅成功！')
+      router.push('/orders')
+    } else {
+      alert(`借阅失败: ${result.message || '未知错误'}`)
+    }
+  } catch (error) {
+    console.error('借阅过程中发生错误:', error)
+    alert('借阅失败: 系统错误，请稍后重试')
   }
 }
 </script>

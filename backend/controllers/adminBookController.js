@@ -29,9 +29,9 @@ exports.getBook = async (req, res) => {
 // 添加图书
 exports.addBook = async (req, res) => {
   try {
-    const { title, author, description, price, stock, category, featured } = req.body;
+    const { title, author, description, isbn, publisher, location, category, featured } = req.body;
     
-    if (!title || !author || !price || price <= 0) {
+    if (!title || !author) {
       return res.status(400).json({ message: '请提供有效的图书信息' });
     }
     
@@ -54,8 +54,9 @@ exports.addBook = async (req, res) => {
       title,
       author,
       description: description || '',
-      price,
-      stock: stock || 0,
+      isbn: isbn || '',
+      publisher: publisher || '',
+      location: location || '',
       cover_image,
       category: category || '',
       featured: featuredValue
@@ -74,15 +75,11 @@ exports.addBook = async (req, res) => {
 exports.updateBook = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const { title, author, description, price, stock, category, featured } = req.body;
+    const { title, author, description, isbn, publisher, location, category, featured } = req.body;
     
     const book = await Book.getById(bookId);
     if (!book) {
       return res.status(404).json({ message: '图书不存在' });
-    }
-    
-    if (price && price <= 0) {
-      return res.status(400).json({ message: '价格必须大于0' });
     }
     
     // 处理封面图片
@@ -110,8 +107,9 @@ exports.updateBook = async (req, res) => {
       title,
       author,
       description,
-      price,
-      stock,
+      isbn,
+      publisher,
+      location,
       cover_image,
       category,
       featured: featuredValue

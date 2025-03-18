@@ -30,18 +30,18 @@ class Book {
   }
   
   static async create(bookData) {
-    const { title, author, description, price, stock, category, cover_image, featured } = bookData;
+    const { title, author, description, isbn, publisher, location, category, cover_image, featured } = bookData;
     
     const [result] = await db.query(
-      'INSERT INTO books (title, author, description, price, stock, category, cover_image, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, author, description, price, stock, category || null, cover_image || null, featured ? 1 : 0]
+      'INSERT INTO books (title, author, description, isbn, publisher, location, category, cover_image, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, author, description, isbn || null, publisher || null, location || null, category || null, cover_image || null, featured ? 1 : 0]
     );
     
     return result.insertId;
   }
   
   static async update(id, bookData) {
-    const { title, author, description, price, stock, category, cover_image, featured } = bookData;
+    const { title, author, description, isbn, publisher, location, category, cover_image, featured } = bookData;
     
     // 构建更新语句
     let query = 'UPDATE books SET ';
@@ -63,14 +63,19 @@ class Book {
       params.push(description);
     }
     
-    if (price !== undefined) {
-      updateFields.push('price = ?');
-      params.push(price);
+    if (isbn !== undefined) {
+      updateFields.push('isbn = ?');
+      params.push(isbn);
     }
     
-    if (stock !== undefined) {
-      updateFields.push('stock = ?');
-      params.push(stock);
+    if (publisher !== undefined) {
+      updateFields.push('publisher = ?');
+      params.push(publisher);
+    }
+    
+    if (location !== undefined) {
+      updateFields.push('location = ?');
+      params.push(location);
     }
     
     if (category !== undefined) {

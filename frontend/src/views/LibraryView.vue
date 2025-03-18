@@ -111,8 +111,11 @@
                   <h5 class="card-title text-truncate" :title="book.title">{{ book.title }}</h5>
                   <h6 class="card-subtitle mb-1 text-muted text-truncate" :title="book.author">{{ book.author }}</h6>
                   <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <span class="text-primary fw-bold price">¥{{ book.price }}</span>
-                    <span class="badge bg-secondary">{{ book.category }}</span>
+                    <span class="badge bg-primary">{{ book.category }}</span>
+                    <span class="badge bg-secondary">{{ book.publisher || '暂无出版商' }}</span>
+                  </div>
+                  <div class="mt-1">
+                    <small class="text-muted">位置: {{ book.location || '暂无' }}</small>
                   </div>
                 </div>
               </div>
@@ -428,13 +431,21 @@ function nextPage() {
   color: #e74c3c;
 }
 
-/* 调整标签大小 */
+/* 调整标签大小和样式 */
 .badge {
-  font-weight: normal;
-  padding: 0.2em 0.4em;
-  background-color: #f0f0f0;
-  color: #666;
-  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.3em 0.6em;
+  font-size: 0.7rem;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #757575, #616161) !important;
+  box-shadow: 0 2px 4px rgba(117, 117, 117, 0.3);
 }
 
 /* 固定分页控件位置 */

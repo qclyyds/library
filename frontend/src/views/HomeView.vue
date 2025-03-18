@@ -68,8 +68,16 @@
             <h5 class="card-title">{{ book.title }}</h5>
             <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
             <p class="card-text">{{ book.description?.substring(0, 100) }}{{ book.description?.length > 100 ? '...' : '' }}</p>
-            <p class="card-text text-primary fw-bold">¥{{ book.price }}</p>
-            <RouterLink :to="`/book/${book.id}`" class="btn btn-outline-primary">查看详情</RouterLink>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge bg-primary">{{ book.category }}</span>
+              <span class="badge bg-secondary">{{ book.publisher || '暂无出版商' }}</span>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">位置: {{ book.location || '暂无' }}</small>
+            </div>
+            <div class="mt-3">
+              <RouterLink :to="`/book/${book.id}`" class="btn btn-outline-primary">查看详情</RouterLink>
+            </div>
           </div>
         </div>
       </div>
@@ -99,6 +107,23 @@ onMounted(() => {
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
   padding: 20px;
+}
+
+/* 标签样式 */
+.badge {
+  font-weight: 600;
+  padding: 0.3em 0.6em;
+  font-size: 0.7rem;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #757575, #616161) !important;
+  box-shadow: 0 2px 4px rgba(117, 117, 117, 0.3);
 }
 
 @media (max-width: 768px) {

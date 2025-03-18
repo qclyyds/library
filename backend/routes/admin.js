@@ -14,7 +14,7 @@ router.put('/books/:id', adminAuth, upload.single('cover_image'), adminBookContr
 router.delete('/books/:id', adminAuth, adminBookController.deleteBook);
 router.patch('/books/:id/featured', adminAuth, adminBookController.updateFeaturedStatus);
 
-// 订单管理路由
+// 借阅管理路由
 router.get('/orders', adminAuth, adminOrderController.getAllOrders);
 router.get('/orders/:id', adminAuth, adminOrderController.getOrder);
 router.post('/orders', adminAuth, adminOrderController.createOrder);

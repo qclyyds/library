@@ -83,8 +83,9 @@
                       <th>书名</th>
                       <th>作者</th>
                       <th>分类</th>
-                      <th>价格</th>
-                      <th>库存</th>
+                      <th>ISBN</th>
+                      <th>出版商</th>
+                      <th>位置</th>
                       <th>推荐</th>
                       <th>操作</th>
                     </tr>
@@ -95,8 +96,9 @@
                       <td>{{ book.title }}</td>
                       <td>{{ book.author }}</td>
                       <td>{{ book.category || '未分类' }}</td>
-                      <td>¥{{ book.price }}</td>
-                      <td>{{ book.stock }}</td>
+                      <td>{{ book.isbn || '暂无' }}</td>
+                      <td>{{ book.publisher || '暂无' }}</td>
+                      <td>{{ book.location || '暂无' }}</td>
                       <td>
                         <span v-if="book.featured" class="badge bg-success">推荐</span>
                         <span v-else class="badge bg-secondary">普通</span>
@@ -225,6 +227,36 @@
               ></textarea>
             </div>
             <div class="mb-3">
+              <label for="isbn" class="form-label">ISBN</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="isbn" 
+                v-model="bookForm.isbn"
+                placeholder="请输入ISBN号"
+              >
+            </div>
+            <div class="mb-3">
+              <label for="publisher" class="form-label">出版商</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="publisher" 
+                v-model="bookForm.publisher"
+                placeholder="请输入出版商"
+              >
+            </div>
+            <div class="mb-3">
+              <label for="location" class="form-label">位置</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="location" 
+                v-model="bookForm.location"
+                placeholder="请输入图书位置"
+              >
+            </div>
+            <div class="mb-3">
               <label for="category" class="form-label">分类</label>
               <select 
                 class="form-select" 
@@ -244,29 +276,6 @@
                 <option value="世界史">世界史</option>
                 <option value="中国史">中国史</option>
               </select>
-            </div>
-            <div class="mb-3">
-              <label for="price" class="form-label">价格</label>
-              <input 
-                type="number" 
-                class="form-control" 
-                id="price" 
-                v-model="bookForm.price"
-                min="0"
-                step="0.01"
-                required
-              >
-            </div>
-            <div class="mb-3">
-              <label for="stock" class="form-label">库存</label>
-              <input 
-                type="number" 
-                class="form-control" 
-                id="stock" 
-                v-model="bookForm.stock"
-                min="0"
-                required
-              >
             </div>
             <div class="mb-3">
               <label for="cover_image" class="form-label">封面图片</label>
@@ -408,9 +417,10 @@ const bookForm = ref({
   title: '',
   author: '',
   description: '',
+  isbn: '',
+  publisher: '',
+  location: '',
   category: '',
-  price: 0,
-  stock: 0,
   cover_image: '',
   featured: false
 })
@@ -564,9 +574,11 @@ function addBook() {
     title: '',
     author: '',
     description: '',
-    price: 0,
-    stock: 0,
+    isbn: '',
+    publisher: '',
+    location: '',
     category: '',
+    cover_image: '',
     featured: false
   }
   imagePreview.value = null

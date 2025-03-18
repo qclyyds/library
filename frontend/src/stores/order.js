@@ -16,7 +16,7 @@ export const useOrderStore = defineStore('order', () => {
       const response = await axios.get('http://localhost:3000/api/orders')
       orders.value = response.data
     } catch (err) {
-      error.value = '获取订单失败'
+      error.value = '获取借阅记录失败'
       console.error(err)
     } finally {
       loading.value = false
@@ -29,12 +29,20 @@ export const useOrderStore = defineStore('order', () => {
     
     try {
       const response = await axios.post('http://localhost:3000/api/orders', { items })
-      await fetchUserOrders()
-      return { success: true, orderId: response.data.orderId }
+      if (response.data && response.data.orderId) {
+        await fetchUserOrders()
+        return { success: true, orderId: response.data.orderId }
+      } else {
+        throw new Error('创建借阅记录失败：服务器返回数据无效')
+      }
     } catch (err) {
-      error.value = '创建订单失败'
-      console.error(err)
-      return { success: false, message: err.response?.data?.message || '创建订单失败' }
+      console.error('借阅失败:', err)
+      error.value = err.response?.data?.message || '借阅失败'
+      return { 
+        success: false, 
+        message: error.value,
+        bookId: err.response?.data?.bookId
+      }
     } finally {
       loading.value = false
     }
@@ -49,8 +57,8 @@ export const useOrderStore = defineStore('order', () => {
       await fetchUserOrders()
       return { success: true }
     } catch (err) {
-      error.value = err.response?.data?.message || '删除订单失败'
-      console.error('删除订单失败:', err)
+      error.value = err.response?.data?.message || '归还图书失败'
+      console.error('归还图书失败:', err)
       return { success: false, message: error.value }
     } finally {
       cancelling.value = null
