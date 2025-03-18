@@ -1,60 +1,77 @@
 <template>
-  <div class="register">
-    <div class="register-container">
-      <div class="register-box">
-        <h2 class="register-title">注册</h2>
+  <div class="register-page">
+    <div class="register-box">
+      <div class="register-left">
+        <div class="illustration-container">
+          <img src="D:\demo\library\frontend\src\assets\images\login.png" alt="图书馆插图" class="illustration">
+        </div>
+      </div>
+      
+      <div class="register-right">
+        <div class="register-header">
+          <h3 class="register-title-en">User Register</h3>
+          <h2 class="register-title">欢迎注册<br>图书馆管理系统</h2>
+        </div>
         
         <form @submit.prevent="handleSubmit" class="register-form">
           <div class="form-group">
-            <label for="username">用户名</label>
-            <input
-              type="text"
-              id="username"
-              v-model="formData.username"
-              class="form-control"
-              placeholder="请输入用户名"
-              required
-            >
+            <div class="input-with-icon">
+              <i class="bi bi-person"></i>
+              <input
+                type="text"
+                id="username"
+                v-model="formData.username"
+                class="form-control"
+                placeholder="用户名"
+                required
+              >
+            </div>
           </div>
           
           <div class="form-group">
-            <label for="email">邮箱</label>
-            <input
-              type="email"
-              id="email"
-              v-model="formData.email"
-              class="form-control"
-              placeholder="请输入邮箱"
-              required
-            >
+            <div class="input-with-icon">
+              <i class="bi bi-envelope"></i>
+              <input
+                type="email"
+                id="email"
+                v-model="formData.email"
+                class="form-control"
+                placeholder="邮箱"
+                required
+              >
+            </div>
           </div>
           
           <div class="form-group">
-            <label for="password">密码</label>
-            <input
-              type="password"
-              id="password"
-              v-model="formData.password"
-              class="form-control"
-              placeholder="请输入密码"
-              required
-            >
+            <div class="input-with-icon">
+              <i class="bi bi-lock"></i>
+              <input
+                type="password"
+                id="password"
+                v-model="formData.password"
+                class="form-control"
+                placeholder="密码"
+                required
+              >
+            </div>
           </div>
           
           <div class="form-group">
-            <label for="confirmPassword">确认密码</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              v-model="formData.confirmPassword"
-              class="form-control"
-              placeholder="请再次输入密码"
-              required
-            >
+            <div class="input-with-icon">
+              <i class="bi bi-lock-fill"></i>
+              <input
+                type="password"
+                id="confirmPassword"
+                v-model="formData.confirmPassword"
+                class="form-control"
+                placeholder="确认密码"
+                required
+              >
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>账户类型</label>
+          <div class="role-selector">
+            <label class="role-label">账户类型：</label>
             <div class="role-options">
               <label class="role-option">
                 <input
@@ -77,18 +94,18 @@
             </div>
           </div>
           
+          <div v-if="error" class="error-message">
+            {{ error }}
+          </div>
+          
           <div class="form-group">
             <button 
               type="submit" 
-              class="submit-btn"
+              class="register-btn"
               :disabled="loading"
             >
-              {{ loading ? '注册中...' : '注册' }}
+              {{ loading ? '注册中...' : '立即注册' }}
             </button>
-          </div>
-          
-          <div v-if="error" class="error-message">
-            {{ error }}
           </div>
         </form>
         
@@ -145,63 +162,133 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.register {
+.register-page {
+  width: 100%;
   min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background-color: #f5f7fa;
-  padding: 20px;
-}
-
-.register-container {
-  width: 100%;
-  max-width: 420px;
+  align-items: center;
+  background: linear-gradient(135deg, #2196f3 0%, #2196f3 40%, #1976d2 100%);
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-x: hidden;
 }
 
 .register-box {
-  background: white;
-  padding: 60px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 100%;
+  max-width: 920px;
+  margin: 20px;
+}
+
+.register-left {
+  width: 425px;
+  background: #f8f9fa;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.illustration-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.illustration {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+}
+
+.register-right {
+  width: 495px;
+  padding: 50px 40px;
+}
+
+.register-header {
+  margin-bottom: 40px;
+}
+
+.register-title-en {
+  color: #6c757d;
+  font-weight: normal;
+  margin-bottom: 10px;
+  font-size: 18px;
 }
 
 .register-title {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #2c3e50;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
+  color: #333;
+  line-height: 1.4;
 }
 
 .register-form {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #2c3e50;
-  font-weight: 500;
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #f5f8fb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.input-with-icon i {
+  position: absolute;
+  left: 15px;
+  color: #adb5bd;
+  font-size: 18px;
 }
 
 .form-control {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.3s;
+  padding: 15px 15px 15px 45px;
+  border: none;
+  background-color: transparent;
+  font-size: 15px;
+  color: #495057;
 }
 
 .form-control:focus {
-  border-color: #409eff;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
+}
+
+.form-control::placeholder {
+  color: #adb5bd;
+}
+
+.role-selector {
+  margin: 25px 0;
+}
+
+.role-label {
+  display: inline-block;
+  color: #495057;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .role-options {
@@ -220,61 +307,88 @@ async function handleSubmit() {
 }
 
 .role-text {
-  color: #2c3e50;
+  color: #495057;
 }
 
-.submit-btn {
+.register-btn {
   width: 100%;
-  padding: 12px;
-  background-color: #409eff;
+  padding: 15px;
+  background-color: #2196f3;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background-color 0.3s;
 }
 
-.submit-btn:hover {
-  background-color: #66b1ff;
+.register-btn:hover {
+  background-color: #1976d2;
 }
 
-.submit-btn:disabled {
-  background-color: #a0cfff;
+.register-btn:disabled {
+  background-color: #90caf9;
   cursor: not-allowed;
 }
 
 .error-message {
-  color: #f56c6c;
+  color: #e74c3c;
   font-size: 14px;
-  margin-top: 8px;
+  margin: 10px 0;
   text-align: center;
 }
 
 .login-link {
   text-align: center;
   font-size: 14px;
-  color: #606266;
+  color: #6c757d;
+  margin-top: 20px;
 }
 
 .login-link a {
-  color: #409eff;
+  color: #2196f3;
   text-decoration: none;
+  font-weight: 500;
 }
 
 .login-link a:hover {
-  color: #66b1ff;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .register-box {
+    flex-direction: column;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .register-left, .register-right {
+    width: 100%;
+  }
+  
+  .register-left {
+    padding: 30px;
+    justify-content: center;
+  }
+  
+  .illustration {
+    margin-top: 60px;
+    max-width: 200px;
+  }
+  
+  .register-right {
+    padding: 30px;
+  }
 }
 
 @media (max-width: 480px) {
-  .register-box {
-    padding: 30px 20px;
+  .register-left {
+    display: none;
   }
   
-  .register-title {
-    font-size: 20px;
-    margin-bottom: 20px;
+  .register-right {
+    padding: 40px 20px;
   }
 }
 </style> 

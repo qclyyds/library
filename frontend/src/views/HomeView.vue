@@ -1,11 +1,46 @@
 <template>
   <div class="home">
-    <div class="jumbotron bg-light p-4 p-md-5 rounded-3 mb-4">
-      <h1 class="display-5 display-md-4">欢迎来到图书馆管理系统</h1>
-      <p class="lead">在这里您可以浏览、借阅和管理书籍</p>
-      <hr class="my-4">
-      <p>快速开始浏览我们的图书馆</p>
-      <RouterLink to="/library" class="btn btn-primary btn-lg">浏览图书</RouterLink>
+    <!-- 轮播图替换原来的欢迎文本 -->
+    <div id="libraryCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#libraryCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="第一张幻灯片"></button>
+        <button type="button" data-bs-target="#libraryCarousel" data-bs-slide-to="1" aria-label="第二张幻灯片"></button>
+        <button type="button" data-bs-target="#libraryCarousel" data-bs-slide-to="2" aria-label="第三张幻灯片"></button>
+      </div>
+      <div class="carousel-inner rounded-3">
+        <div class="carousel-item active">
+          <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&h=400&fit=crop" class="d-block w-100" alt="图书馆图片1">
+          <div class="carousel-caption d-none d-md-block">
+            <h2>欢迎来到图书馆管理系统</h2>
+            <p>在这里您可以浏览、借阅和管理书籍</p>
+            <RouterLink to="/library" class="btn btn-primary btn-lg">浏览图书</RouterLink>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?q=80&w=1200&h=400&fit=crop" class="d-block w-100" alt="图书馆图片2">
+          <div class="carousel-caption d-none d-md-block">
+            <h2>发现优质读物</h2>
+            <p>挑选您喜爱的书籍，拓展知识视野</p>
+            <RouterLink to="/library" class="btn btn-success btn-lg">查看全部图书</RouterLink>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=1200&h=400&fit=crop" class="d-block w-100" alt="图书馆图片3">
+          <div class="carousel-caption d-none d-md-block">
+            <h2>加入我们的读书社区</h2>
+            <p>注册账号，管理您的借阅活动</p>
+            <RouterLink to="/register" class="btn btn-info btn-lg">立即注册</RouterLink>
+          </div>
+        </div>
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#libraryCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">上一个</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#libraryCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">下一个</span>
+      </button>
     </div>
 
     <h2 class="mb-4">推荐图书</h2>
@@ -55,13 +90,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.carousel-item img {
+  height: 400px;
+  object-fit: cover;
+}
+
+.carousel-caption {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 20px;
+}
+
 @media (max-width: 768px) {
-  .display-5 {
-    font-size: 1.8rem;
+  .carousel-item img {
+    height: 300px;
   }
   
-  .lead {
-    font-size: 1rem;
+  .carousel-caption {
+    padding: 10px;
   }
   
   .btn-lg {
